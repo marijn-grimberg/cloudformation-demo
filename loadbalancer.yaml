@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Network Load Balancer Template'
 Resources:
-  DemoALBSecurityGroup:
+  DemoNLBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: 'NLB Security Group'
@@ -12,23 +12,23 @@ Resources:
           CidrIp: 0.0.0.0/0
       VpcId: !ImportValue DemoVpcId
 
-  DemoApplicationLoadBalancer:
+  DemoNetworkLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: 'demo-application-load-balancer'
+      Name: 'demo-network-load-balancer'
       SecurityGroups:
-        - !Ref DemoALBSecurityGroup
+        - !Ref DemoNLBSecurityGroup
       Subnets:
-        - !ImportValue DemoPublicSubnet1Id
-        - !ImportValue DemoPublicSubnet2Id
-      Scheme: internet-facing
-      Type: application
+        - !ImportValue DemoPrivateSubnet1Id
+        - !ImportValue DemoPrivateSubnet2Id
+      Scheme: internal
+      Type: network
 
   FargateTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       Name: 'fargate-target-group'
-      Protocol: HTTP
+      Protocol: TCP
       Port: 5001
       VpcId: !ImportValue DemoVpcId
       TargetType: ip
@@ -39,11 +39,21 @@ Resources:
       DefaultActions:
         - TargetGroupArn: !Ref FargateTargetGroup
           Type: forward
-      LoadBalancerArn: !Ref DemoApplicationLoadBalancer
+      LoadBalancerArn: !Ref DemoNetworkLoadBalancer
       Port: 80
-      Protocol: HTTP
+      Protocol: TCP
 
 Outputs:
+  DemoNlbArn:
+    Value: !Ref DemoNetworkLoadBalancer
+    Export:
+      Name: DemoNlbArn
+
+  DemoNlbDns:
+    Value: !GetAtt DemoNetworkLoadBalancer.DNSName
+    Export:
+      Name: DemoNlbDns
+
   FargateTargetGroupArn:
     Value: !Ref FargateTargetGroup
     Export:
