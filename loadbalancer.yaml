@@ -10,10 +10,6 @@ Resources:
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
       VpcId: !ImportValue DemoVpcId
 
   DemoApplicationLoadBalancer:
@@ -28,7 +24,7 @@ Resources:
       Scheme: internet-facing
       Type: application
 
-  FargateTargetGroupDemo:
+  FargateTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       HealthCheckPath: '/demo/health'
@@ -38,41 +34,18 @@ Resources:
       VpcId: !ImportValue DemoVpcId
       TargetType: ip
 
-  DemoALBListener:
+  DemoNLBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
-        - Type: authenticate-cognito
-          Order: 1
-          AuthenticateCognitoConfig:
-            UserPoolArn: 'arn:aws:cognito-idp:eu-west-3:360463448794:userpool/eu-west-3_N9dmuTXSK'
-            UserPoolClientId: 's7dtlu2ugb4qtk9q730a8lmc1'
-            UserPoolDomain: 'eu-west-3n9dmutxsk.auth.eu-west-3.amazoncognito.com'
-            OnUnauthenticatedRequest: 'deny'
-        - TargetGroupArn: !Ref FargateTargetGroupDemo
-          Order: 2
+        - TargetGroupArn: !Ref FargateTargetGroup
           Type: forward
       LoadBalancerArn: !Ref DemoApplicationLoadBalancer
-      Port: 443
-      Protocol: HTTPS
-      Certificates:
-        - CertificateArn: "arn:aws:acm:eu-west-3:360463448794:certificate/a5bccddd-6faf-45b1-a766-7bc252f729f8"
-
-  ALBListenerRuleDemo:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - Type: forward
-          TargetGroupArn: !Ref FargateTargetGroupDemo
-      Conditions:
-        - Field: path-pattern
-          Values:
-            - "/demo/*"
-      ListenerArn: !Ref DemoALBListener
-      Priority: 10
+      Port: 80
+      Protocol: HTTP
 
 Outputs:
-  FargateTargetGroupDemoArn:
-    Value: !Ref FargateTargetGroupDemo
+  FargateTargetGroupArn:
+    Value: !Ref FargateTargetGroup
     Export:
-      Name: FargateTargetGroupDemoArn
+      Name: FargateTargetGroupArn

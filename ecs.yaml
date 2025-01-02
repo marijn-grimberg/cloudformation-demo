@@ -27,7 +27,7 @@ Resources:
       LoadBalancers:
         - ContainerName: 'demo'
           ContainerPort: 5001
-          TargetGroupArn: !ImportValue FargateTargetGroupDemoArn
+          TargetGroupArn: !ImportValue FargateTargetGroupArn
       NetworkConfiguration:
         AwsvpcConfiguration:
           Subnets:
