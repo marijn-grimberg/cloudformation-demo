@@ -27,7 +27,6 @@ Resources:
   FargateTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      HealthCheckPath: '/demo/health'
       Name: 'fargate-target-group'
       Protocol: HTTP
       Port: 5001
