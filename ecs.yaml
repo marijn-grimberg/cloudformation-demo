@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'ECS Template'
+Resources:
+  DemoEcsCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: 'demo-ecs-cluster'
+
+  DemoECSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'ECS Security Group'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5001
+          ToPort: 5001
+          CidrIp: 0.0.0.0/0
+      VpcId: !ImportValue DemoVpcId
+
+  DemoEcsService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref DemoEcsCluster
+      ServiceName: 'demo-ecs-service'
+      TaskDefinition: 'demo'
+      LaunchType: FARGATE
+      LoadBalancers:
+        - ContainerName: 'demo'
+          ContainerPort: 5001
+          TargetGroupArn: !ImportValue FargateTargetGroupArn
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets:
+            - !ImportValue DemoPrivateSubnet1Id
+            - !ImportValue DemoPrivateSubnet2Id
+          SecurityGroups:
+            - !Ref DemoECSSecurityGroup
