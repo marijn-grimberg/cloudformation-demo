@@ -145,3 +145,13 @@ Outputs:
     Export:
       Name: DemoPrivateSubnet2Id
 
+  DemoPublicSubnet1Id:
+    Value: !Ref PublicSubnet1
+    Export:
+      Name: DemoPublicSubnet1Id
+
+  DemoPublicSubnet2Id:
+    Value: !Ref PublicSubnet2
+    Export:
+      Name: DemoPublicSubnet2Id
+
