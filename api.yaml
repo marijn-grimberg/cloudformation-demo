@@ -1,27 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'API Template'
 Resources:
-  DemoVpcLinkSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: 'Demo VPC Link Security Group'
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
-      VpcId: !ImportValue DemoVpcId
-
-  DemoVpcLink:
-    Type: AWS::ApiGatewayV2::VpcLink
-    Properties:
-      Name: 'Demo VPC Link'
-      SubnetIds:
-        - !ImportValue DemoPrivateSubnet1Id
-        - !ImportValue DemoPrivateSubnet2Id
-      SecurityGroupIds:
-        - !Ref DemoVpcLinkSecurityGroup
-
   DemoHttpApi:
     Type: AWS::ApiGatewayV2::Api
     Properties:
@@ -36,7 +15,7 @@ Resources:
       IntegrationUri: !ImportValue DemoNLBListenerArn
       IntegrationMethod: ANY
       ConnectionType: VPC_LINK
-      ConnectionId: !Ref DemoVpcLink
+      ConnectionId: !ImportValue DemoVpcLinkArn
       PayloadFormatVersion: 1.0
       RequestParameters:
         "overwrite:header.X-User-Roles": "$context.authorizer.claims.cognito_groups"

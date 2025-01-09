@@ -1,0 +1,34 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'API VPC Link Template'
+Resources:
+  DemoVpcLinkSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'Demo VPC Link Security Group'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      VpcId: !ImportValue DemoVpcId
+
+  DemoVpcLink:
+    Type: AWS::ApiGatewayV2::VpcLink
+    Properties:
+      Name: 'Demo VPC Link'
+      SubnetIds:
+        - !ImportValue DemoPrivateSubnet1Id
+        - !ImportValue DemoPrivateSubnet2Id
+      SecurityGroupIds:
+        - !Ref DemoVpcLinkSecurityGroup
+
+Outputs:
+  DemoVpcLinkArn:
+    Value: !Ref DemoVpcLink
+    Export:
+      Name: DemoVpcLinkArn
+
+  DemoVpcLinkSecurityGroupId:
+    Value: !Ref DemoVpcLinkSecurityGroup
+    Export:
+      Name: DemoVpcLinkSecurityGroupId
