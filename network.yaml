@@ -22,7 +22,7 @@ Resources:
   PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
-      AvailabilityZoneId: euw3-az2
+      AvailabilityZoneId: euw3-az3
       CidrBlock: 10.0.16.0/20
       VpcId: !Ref DemoVPC
       Tags:
@@ -42,7 +42,7 @@ Resources:
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
-      AvailabilityZoneId: euw3-az2
+      AvailabilityZoneId: euw3-az3
       CidrBlock: 10.0.144.0/20
       VpcId: !Ref DemoVPC
       Tags:

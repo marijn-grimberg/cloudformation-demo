@@ -1,55 +1,72 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'API Template'
 Resources:
+  DemoVpcLinkSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'Demo VPC Link Security Group'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      VpcId: !ImportValue DemoVpcId
+
   DemoVpcLink:
-    Type: AWS::ApiGateway::VpcLink
+    Type: AWS::ApiGatewayV2::VpcLink
     Properties:
       Name: 'Demo VPC Link'
-      TargetArns:
-        - !ImportValue DemoNlbArn
+      SubnetIds:
+        - !ImportValue DemoPrivateSubnet1Id
+        - !ImportValue DemoPrivateSubnet2Id
+      SecurityGroupIds:
+        - !Ref DemoVpcLinkSecurityGroup
 
-  DemoRestApi:
-    Type: AWS::ApiGateway::RestApi
+  DemoHttpApi:
+    Type: AWS::ApiGatewayV2::Api
     Properties:
-      Name: 'Demo Rest Api'
+      Name: 'Demo Http Api'
+      ProtocolType: HTTP
 
-  DemoProxyResource:
-    Type: AWS::ApiGateway::Resource
+  DemoApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
     Properties:
-      ParentId: !GetAtt DemoRestApi.RootResourceId
-      RestApiId: !Ref DemoRestApi
-      PathPart: "{proxy+}"
+      ApiId: !Ref DemoHttpApi
+      IntegrationType: HTTP_PROXY
+      IntegrationUri: !ImportValue DemoNLBListenerArn
+      IntegrationMethod: ANY
+      ConnectionType: VPC_LINK
+      ConnectionId: !Ref DemoVpcLink
+      PayloadFormatVersion: 1.0
+      RequestParameters:
+        "overwrite:header.X-User-Roles": "$context.authorizer.claims.cognito_groups"
+        "overwrite:path": "/$request.path.proxy"
 
   CognitoAuthorizer:
-    Type: AWS::ApiGateway::Authorizer
+    Type: AWS::ApiGatewayV2::Authorizer
     Properties:
       Name: 'cognito-authorizer'
-      IdentitySource: 'method.request.header.Authorization'
-      ProviderARNs:
-        - 'arn:aws:cognito-idp:eu-west-3:360463448794:userpool/eu-west-3_lswiodBeZ'
-      RestApiId: !Ref DemoRestApi
-      Type: COGNITO_USER_POOLS
+      ApiId: !Ref DemoHttpApi
+      AuthorizerType: JWT
+      IdentitySource:
+        - "$request.header.Authorization"
+      JwtConfiguration:
+        Audience:
+          - 3b913ptbln89jecm13l9hhk9pm
+        Issuer: "https://cognito-idp.eu-west-3.amazonaws.com/eu-west-3_lswiodBeZ"
 
-  ApiGatewayMethod:
-    Type: AWS::ApiGateway::Method
+  DemoApiRoute:
+    Type: AWS::ApiGatewayV2::Route
     Properties:
-      AuthorizationType: COGNITO_USER_POOLS
+      ApiId: !Ref DemoHttpApi
+      RouteKey: ANY /demo-api/{proxy+}
+      Target: !Sub "integrations/${DemoApiIntegration}"
+      AuthorizationType: JWT
       AuthorizerId: !Ref CognitoAuthorizer
-      HttpMethod: ANY
-      ResourceId: !Ref DemoProxyResource
-      RestApiId: !Ref DemoRestApi
-      RequestParameters:
-        method.request.path.proxy: true
-      Integration:
-        IntegrationHttpMethod: ANY
-        Type: HTTP_PROXY
-        Uri: !Sub
-          - 'http://${DemoNlbDns}/{proxy}'
-          - DemoNlbDns: !ImportValue DemoNlbDns
-        ConnectionType: VPC_LINK
-        ConnectionId: !Ref DemoVpcLink
-        RequestParameters:
-          integration.request.path.proxy: 'method.request.path.proxy'
-        PassthroughBehavior: WHEN_NO_TEMPLATES
-        IntegrationResponses:
-          - StatusCode: 200
+
+  DemoApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref DemoHttpApi
+      StageName: $default
+      AutoDeploy: true

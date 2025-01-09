@@ -7,8 +7,8 @@ Resources:
       GroupDescription: 'NLB Security Group'
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
+          FromPort: 5001
+          ToPort: 5001
           CidrIp: 0.0.0.0/0
       VpcId: !ImportValue DemoVpcId
 
@@ -24,10 +24,12 @@ Resources:
       Scheme: internal
       Type: network
 
-  FargateTargetGroup:
+  DemoFargateTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      HealthCheckPath: '/demo/health'
+      HealthCheckPath: '/health'
+      HealthCheckPort: 5001
+      HealthCheckProtocol: HTTP
       Name: 'fargate-target-group'
       Protocol: TCP
       Port: 5001
@@ -38,10 +40,10 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
-        - TargetGroupArn: !Ref FargateTargetGroup
+        - TargetGroupArn: !Ref DemoFargateTargetGroup
           Type: forward
       LoadBalancerArn: !Ref DemoNetworkLoadBalancer
-      Port: 80
+      Port: 5001
       Protocol: TCP
 
 Outputs:
@@ -50,12 +52,17 @@ Outputs:
     Export:
       Name: DemoNlbArn
 
+  DemoNLBListenerArn:
+    Value: !Ref DemoNLBListener
+    Export:
+      Name: DemoNLBListenerArn
+
   DemoNlbDns:
     Value: !GetAtt DemoNetworkLoadBalancer.DNSName
     Export:
       Name: DemoNlbDns
 
   FargateTargetGroupArn:
-    Value: !Ref FargateTargetGroup
+    Value: !Ref DemoFargateTargetGroup
     Export:
       Name: FargateTargetGroupArn
