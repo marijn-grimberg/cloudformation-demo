@@ -1,5 +1,16 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Network Load Balancer Template'
+
+Parameters:
+  DemoVpcId:
+    Type: String
+  DemoPrivateSubnet1Id:
+    Type: String
+  DemoPrivateSubnet2Id:
+    Type: String
+  DemoVpcLinkSecurityGroupId:
+    Type: String
+
 Resources:
   DemoNLBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -9,8 +20,8 @@ Resources:
         - IpProtocol: tcp
           FromPort: 5001
           ToPort: 5001
-          SourceSecurityGroupId: !ImportValue DemoVpcLinkSecurityGroupId
-      VpcId: !ImportValue DemoVpcId
+          SourceSecurityGroupId: !Ref DemoVpcLinkSecurityGroupId
+      VpcId: !Ref DemoVpcId
 
   DemoNetworkLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
@@ -19,8 +30,8 @@ Resources:
       SecurityGroups:
         - !Ref DemoNLBSecurityGroup
       Subnets:
-        - !ImportValue DemoPrivateSubnet1Id
-        - !ImportValue DemoPrivateSubnet2Id
+        - !Ref DemoPrivateSubnet1Id
+        - !Ref DemoPrivateSubnet2Id
       Scheme: internal
       Type: network
 
@@ -33,7 +44,7 @@ Resources:
       Name: 'fargate-target-group'
       Protocol: TCP
       Port: 5001
-      VpcId: !ImportValue DemoVpcId
+      VpcId: !Ref DemoVpcId
       TargetType: ip
 
   DemoNLBListener:

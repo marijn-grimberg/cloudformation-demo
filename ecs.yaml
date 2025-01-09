@@ -1,5 +1,18 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'ECS Template'
+
+Parameters:
+  DemoNLBSecurityGroupId:
+    Type: String
+  DemoVpcId:
+    Type: String
+  FargateTargetGroupArn:
+    Type: String
+  DemoPrivateSubnet1Id:
+    Type: String
+  DemoPrivateSubnet2Id:
+    Type: String
+
 Resources:
   DemoEcsCluster:
     Type: AWS::ECS::Cluster

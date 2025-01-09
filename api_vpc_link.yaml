@@ -1,5 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'API VPC Link Template'
+
+Parameters:
+  DemoPrivateSubnet1Id:
+    Type: String
+  DemoPrivateSubnet2Id:
+    Type: String
+
 Resources:
   DemoVpcLinkSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -17,8 +24,8 @@ Resources:
     Properties:
       Name: 'Demo VPC Link'
       SubnetIds:
-        - !ImportValue DemoPrivateSubnet1Id
-        - !ImportValue DemoPrivateSubnet2Id
+        - !Ref DemoPrivateSubnet1Id
+        - !Ref DemoPrivateSubnet2Id
       SecurityGroupIds:
         - !Ref DemoVpcLinkSecurityGroup
 

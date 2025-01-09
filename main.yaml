@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Main Template'
+Resources:
+  NetworkStack:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      TemplateURL: "https://cloudformation-demo-fargate.s3.eu-west-3.amazonaws.com/network.yaml"
+
+  ApiVpcLinkStack:
+    Type: "AWS::CloudFormation::Stack"
+    DependsOn: NetworkStack
+    Properties:
+      TemplateURL: "https://cloudformation-demo-fargate.s3.eu-west-3.amazonaws.com/api_vpc_link.yaml"
+      Parameters:
+        DemoPrivateSubnet1Id: !GetAtt NetworkStack.Outputs.DemoPrivateSubnet1Id
+        DemoPrivateSubnet2Id: !GetAtt NetworkStack.Outputs.DemoPrivateSubnet2Id
+
+  LoadBalancerStack:
+    Type: "AWS::CloudFormation::Stack"
+    DependsOn:
+      - NetworkStack
+      - ApiVpcLinkStack
+    Properties:
+      TemplateURL: "https://cloudformation-demo-fargate.s3.eu-west-3.amazonaws.com/loadbalancer.yaml"
+      Parameters:
+        DemoVpcId: !GetAtt NetworkStack.Outputs.DemoVpcId
+        DemoPrivateSubnet1Id: !GetAtt NetworkStack.Outputs.DemoPrivateSubnet1Id
+        DemoPrivateSubnet2Id: !GetAtt NetworkStack.Outputs.DemoPrivateSubnet2Id
+        DemoVpcLinkSecurityGroupId: !GetAtt ApiVpcLinkStack.Outputs.DemoVpcLinkSecurityGroupId
+
+  ApiStack:
+    Type: "AWS::CloudFormation::Stack"
+    DependsOn: LoadBalancerStack
+    Properties:
+      TemplateURL: "https://cloudformation-demo-fargate.s3.eu-west-3.amazonaws.com/api.yaml"
+      Parameters:
+        DemoNLBListenerArn: !GetAtt LoadBalancerStack.Outputs.DemoNLBListenerArn
+        DemoVpcLinkArn: !GetAtt ApiVpcLinkStack.Outputs.DemoVpcLinkArn
+
+  EcsStack:
+    Type: "AWS::CloudFormation::Stack"
+    DependsOn: LoadBalancerStack
+    Properties:
+      TemplateURL: "https://cloudformation-demo-fargate.s3.eu-west-3.amazonaws.com/ecs.yaml"
+      Parameters:
+        DemoNLBSecurityGroupId: !GetAtt LoadBalancerStack.Outputs.DemoNLBSecurityGroupId
+        DemoVpcId: !GetAtt NetworkStack.Outputs.DemoVpcId
+        FargateTargetGroupArn: !GetAtt LoadBalancerStack.Outputs.FargateTargetGroupArn
+        DemoPrivateSubnet1Id: !GetAtt NetworkStack.Outputs.DemoPrivateSubnet1Id
+        DemoPrivateSubnet2Id: !GetAtt NetworkStack.Outputs.DemoPrivateSubnet2Id
